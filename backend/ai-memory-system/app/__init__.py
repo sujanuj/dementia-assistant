@@ -7,15 +7,16 @@ db = SQLAlchemy()
 
 def create_app():
     load_dotenv()
-
     app = Flask(__name__)
     
-    # Uses DATABASE_URL from environment (Railway sets this automatically)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'DATABASE_URL', 
-        'postgresql://localhost/ai_memory'  # fallback for local dev
-    )
+    db_url = os.environ.get('DATABASE_URL', 'postgresql://localhost/ai_memory')
+    # Railway uses postgres:// but SQLAlchemy needs postgresql://
+    if db_url.startswith('postgres://'):
+        db_url = db_url.replace('postgres://', 'postgresql+psycopg://', 1)
+    elif db_url.startswith('postgresql://'):
+        db_url = db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
     
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     db.init_app(app)
 
     from app.routes import main
